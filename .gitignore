@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+
+# outputs
+outputs/
+output/
+
+# local env
+.venv/
+env/
+
+# large raw data
+data/raw/
+data/interim/
+input/
+*.pkl
+*.pt
+
+# office temp
+~$*.docx
+
+# else
+before_test/
+docs/
+pose_lead/
