@@ -11,8 +11,7 @@ output/
 env/
 
 # large raw data
-data/raw/
-data/interim/
+data/
 input/
 *.pkl
 *.pt
@@ -24,3 +23,5 @@ input/
 before_test/
 docs/
 pose_lead/
+tests/
+.claude/

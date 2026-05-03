@@ -1,0 +1,149 @@
+paths:
+  track_file: data/raw/zebrafish_tracks_3d_interpolated.csv
+  gt_file: data/GT/GT.xlsx
+  video_file: data/raw/ZeF-03.mp4
+  output_dir: outputs
+
+data:
+  frame_col: frame
+  id_col: id
+
+  head_x_col: 3d_x
+  head_y_col: 3d_y
+  head_z_col: 3d_z
+
+  body_x_col: body_x
+  body_y_col: body_y
+  body_z_col: body_z
+
+  tail_x_col: tail_x
+  tail_y_col: tail_y
+  tail_z_col: tail_z
+
+  confidence_col: confidence
+  triangulation_error_col: triangulation_error
+  track_quality_col: track_quality
+  interpolated_col: interpolated
+  outlier_corrected_col: outlier_corrected
+
+gt:
+  file_type: xlsx
+  sheet_name: 0
+  video_id_col: video_id
+  fish_id_col: fish_id
+  start_second_col: start_second
+  end_second_col: end_second
+  label_col: label
+  confidence_col: confidence
+
+preprocess:
+  frame_rate: 30.0
+  apply_scaling: false
+  scale_mm_per_unit: 12.0
+  smoothing_enabled: true
+  smoothing_window: 5
+  drop_low_confidence: false
+  min_confidence: 0.8
+  drop_low_quality: false
+  min_track_quality: 0.5
+
+features:
+  displacement_window_seconds: 1.0
+  energy_window_seconds: 1.0
+  stability_window_seconds: 1.0
+  velocity_smoothing_window: 3
+  use_body_points: true
+
+thresholds:
+  v_th_pause: 10.0
+  v_th_glide: 20.0
+  T_min: 1.0
+  D_pause: 4.0
+  D_glide: 10.0
+  P_pause: 1.5
+  C_pause: 20.0
+  C_twist: 60.0
+  E_th_pause: 1000.0
+  S_th_pause: 0.7
+  S_th_twist: 0.4
+  dv_th_glide: 25.0
+  sleep_like_min_duration: 60.0
+
+segmentation:
+  changepoint_enabled: true
+  method: changepoint
+  candidate_min_duration: 0.5
+  signal_features:
+    - v
+    - d_win
+    - E_move
+    - inv_S_pose
+  normalize_features: true
+  normalization: zscore
+  min_segment_length_frames: 15
+  penalty: 2.0
+  save_change_scores: true
+
+detection:
+  use_state_machine: true
+  pause_enter_score: 0.65
+  pause_exit_score: 0.4
+  merge_gap_seconds: 0.3
+  bridge_max_duration_seconds: 0.5
+  pause_score_weights:
+    v: 0.35
+    d_win: 0.25
+    E_move: 0.20
+    S_pose: 0.20
+
+classification:
+  enable_stagnation_detection: true
+  enable_sleep_like: true
+  enable_glide_detection: true
+  enable_twist_detection: true
+  final_priority:
+    - stagnation
+    - twist
+    - glide
+  glide_min_score: 0.6
+  twist_min_score: 0.6
+
+evaluation:
+  enabled: true
+  event_iou_threshold: 0.3
+  label_map:
+    gt:
+      stagnation: stagnation
+      twist: twist
+      glide: glide
+    pred:
+      stagnation: stagnation
+      twist: twist
+      glide: glide
+
+visualization:
+  enabled: true
+  timeline_features:
+    - v
+    - d_win
+    - E_move
+    - S_pose
+    - dv
+  default_time_context_seconds: 1.0
+  max_events_per_label: 3
+  trajectory_projection: xy
+  dpi: 150
+
+adaptive:
+  enabled: false
+  method: distribution
+
+output:
+  save_events: true
+  save_summary: true
+  save_plots: true
+  save_intermediate_features: false
+  save_preprocessed_tracks: true
+  preprocessed_track_file: preprocessed_tracks.csv
+  save_feature_table: true
+  feature_table_file: feature_table.csv
