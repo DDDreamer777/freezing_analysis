@@ -1,0 +1,33 @@
+meta:
+  dataset_name: current_dataset
+  generated_at: '2026-05-07T14:57:14+00:00'
+  method_version: relative_threshold_v1
+  source_config: configs\default.yaml
+  source_segment_file: outputs\intermediate\segmentation\candidate_segments.csv
+  bootstrap_used: true
+  aggregation_policy: per_fish_then_dataset_median
+thresholds:
+  v_th_pause: 34.56375489575793
+  v_th_glide: 42.27967658846883
+  D_pause: 28.83593980233598
+  D_glide: 48.618802036917515
+  E_th_pause: 2566.6291229745943
+  S_th_pause: 0.7393908712529282
+  S_th_twist: 0.6398170311062823
+  dv_th_glide: 11.331398902864358
+diagnostics:
+  v:
+    method: mixed
+    fallback_used: true
+  d_win:
+    method: gmm
+    fallback_used: false
+  E_move:
+    method: gmm
+    fallback_used: false
+  S_pose:
+    method: mixed
+    fallback_used: true
+  dv:
+    method: gmm
+    fallback_used: false

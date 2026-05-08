@@ -50,7 +50,7 @@ def load_config(config_path: str | Path) -> dict[str, Any]:
         config = yaml.safe_load(f) or {}
     if not isinstance(config, dict):
         raise ConfigError(f"配置文件格式错误: {path}")
-    return config
+    return _apply_adaptive_threshold_overlay(config, path)
 
 
 def resolve_paths(config: dict[str, Any], project_root: str | Path | None = None) -> dict[str, Path]:
@@ -156,6 +156,8 @@ def standardize_gt_columns(df: pd.DataFrame, config: dict[str, Any]) -> pd.DataF
     standardized = df.rename(columns=rename_map).copy()
     standardized["video_id"] = standardized["video_id"].astype(str)
     standardized["fish_id"] = standardized["fish_id"].astype(str)
+    fish_id_map = {str(key): str(value) for key, value in gt_config.get("fish_id_map", {}).items()}
+    standardized["fish_id"] = standardized["fish_id"].map(lambda value: fish_id_map.get(value, value))
     standardized["start_second"] = pd.to_numeric(standardized["start_second"], errors="raise")
     standardized["end_second"] = pd.to_numeric(standardized["end_second"], errors="raise")
     standardized["label"] = standardized["label"].astype(str)
@@ -207,3 +209,45 @@ def _validate_gt_columns(df: pd.DataFrame, config: dict[str, Any]) -> None:
     missing_columns = [gt_config[key] for key in required_keys if gt_config[key] not in df.columns]
     if missing_columns:
         raise DataFormatError(f"GT数据缺少必要列: {missing_columns}")
+
+
+def _apply_adaptive_threshold_overlay(config: dict[str, Any], config_path: Path) -> dict[str, Any]:
+    adaptive_config = config.get("adaptive", {})
+    if adaptive_config.get("mode", "absolute") != "relative":
+        return config
+
+    relative_threshold_file = adaptive_config.get("relative_threshold_file")
+    if not relative_threshold_file:
+        return config
+
+    overlay_path = _resolve_overlay_path(config_path, Path(relative_threshold_file))
+    with overlay_path.open("r", encoding="utf-8") as f:
+        overlay_config = yaml.safe_load(f) or {}
+    if not isinstance(overlay_config, dict):
+        raise ConfigError(f"relative 阈值文件格式错误: {overlay_path}")
+
+    thresholds = dict(config.get("thresholds", {}))
+    thresholds.update(overlay_config.get("thresholds", {}))
+    merged_config = dict(config)
+    merged_config["thresholds"] = thresholds
+    return merged_config
+
+
+def _resolve_overlay_path(config_path: Path, overlay_path: Path) -> Path:
+    if overlay_path.is_absolute():
+        return overlay_path
+
+    if overlay_path.exists():
+        return overlay_path
+
+    config_dir_candidate = config_path.parent / overlay_path
+    if config_dir_candidate.exists():
+        return config_dir_candidate
+
+    project_root_candidate = config_path.parent.parent / overlay_path
+    if project_root_candidate.exists():
+        return project_root_candidate
+
+    if config_path.parent.name == "configs":
+        return project_root_candidate
+    return config_dir_candidate

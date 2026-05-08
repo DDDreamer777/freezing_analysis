@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+
+
+SOFT_SCORE_SHARPNESS = 8.0
 
 
 def detect_pause_candidates(
@@ -174,16 +178,25 @@ def _clip_score(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
 
 
+def _sigmoid(value: float) -> float:
+    if value >= 0:
+        return 1.0 / (1.0 + math.exp(-value))
+    exp_value = math.exp(value)
+    return exp_value / (1.0 + exp_value)
+
+
 def _score_low_value_signal(value: float, threshold: float) -> float:
     if threshold <= 0:
         return 0.0
-    return _clip_score(1.0 - float(value) / threshold)
+    ratio = float(value) / threshold
+    return _sigmoid(SOFT_SCORE_SHARPNESS * (1.0 - ratio))
 
 
 def _score_high_value_signal(value: float, threshold: float) -> float:
-    if threshold >= 1.0:
+    if threshold <= 0:
         return 0.0
-    return _clip_score((float(value) - threshold) / (1.0 - threshold))
+    ratio = float(value) / threshold
+    return _sigmoid(SOFT_SCORE_SHARPNESS * (ratio - 1.0))
 
 
 def _can_bridge_transition(

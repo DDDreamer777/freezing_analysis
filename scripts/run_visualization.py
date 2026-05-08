@@ -40,6 +40,9 @@ def run_visualization(
     state_df = pd.read_csv(state_path)
     behavior_df = pd.read_csv(behavior_path)
 
+    if behavior_df.empty:
+        print("No final behavior events found. Generating overview-only visualization and empty-summary placeholders.")
+
     return generate_visualizations(
         feature_df,
         segment_df,

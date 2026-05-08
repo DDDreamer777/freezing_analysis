@@ -218,7 +218,12 @@ def _plot_behavior_trajectory(event_window: pd.DataFrame, event: Any, output_pat
 
 def _plot_behavior_counts(behavior_df: pd.DataFrame, output_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(7, 5))
-    counts = behavior_df["behavior_label"].value_counts() if not behavior_df.empty else pd.Series(dtype=int)
+    if behavior_df.empty:
+        _plot_empty_summary(ax, title="Behavior counts", message="No behavior events available")
+        _save_figure(fig, output_path, {})
+        return
+
+    counts = behavior_df["behavior_label"].value_counts()
     counts.plot(kind="bar", ax=ax, color="#4c78a8")
     ax.set_title("Behavior counts")
     ax.set_xlabel("behavior")
@@ -229,8 +234,12 @@ def _plot_behavior_counts(behavior_df: pd.DataFrame, output_path: Path) -> None:
 
 def _plot_duration_distribution(behavior_df: pd.DataFrame, output_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(7, 5))
-    if not behavior_df.empty:
-        ax.hist(behavior_df["duration"], bins=min(10, max(1, len(behavior_df))), color="#59a14f", alpha=0.85)
+    if behavior_df.empty:
+        _plot_empty_summary(ax, title="Behavior duration distribution", message="No behavior durations available")
+        _save_figure(fig, output_path, {})
+        return
+
+    ax.hist(behavior_df["duration"], bins=min(10, max(1, len(behavior_df))), color="#59a14f", alpha=0.85)
     ax.set_title("Behavior duration distribution")
     ax.set_xlabel("duration (s)")
     ax.set_ylabel("count")
@@ -240,15 +249,28 @@ def _plot_duration_distribution(behavior_df: pd.DataFrame, output_path: Path) ->
 
 def _plot_counts_by_fish(behavior_df: pd.DataFrame, output_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(8, 5))
-    if not behavior_df.empty:
-        pivot = behavior_df.pivot_table(index="fish_id", columns="behavior_label", values="behavior_id", aggfunc="count", fill_value=0)
-        pivot.plot(kind="bar", stacked=True, ax=ax)
+    if behavior_df.empty:
+        _plot_empty_summary(ax, title="Behavior counts by fish", message="No behavior events available")
+        _save_figure(fig, output_path, {})
+        return
+
+    pivot = behavior_df.pivot_table(index="fish_id", columns="behavior_label", values="behavior_id", aggfunc="count", fill_value=0)
+    pivot.plot(kind="bar", stacked=True, ax=ax)
     ax.set_title("Behavior counts by fish")
     ax.set_xlabel("fish_id")
     ax.set_ylabel("count")
     ax.grid(axis="y", alpha=0.25)
     ax.legend(loc="best", fontsize=8)
     _save_figure(fig, output_path, {})
+
+
+def _plot_empty_summary(ax: Any, title: str, message: str) -> None:
+    ax.set_title(title)
+    ax.text(0.5, 0.5, message, ha="center", va="center", fontsize=11, transform=ax.transAxes)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ax.spines.values():
+        spine.set_alpha(0.2)
 
 
 def _timeline_features(config: dict[str, Any], feature_df: pd.DataFrame) -> list[str]:

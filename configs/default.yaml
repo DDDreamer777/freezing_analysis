@@ -1,5 +1,6 @@
 paths:
-  track_file: data/raw/zebrafish_tracks_3d_interpolated.csv
+  # track_file: data/raw/zebrafish_tracks_3d_interpolated.csv
+  track_file: data/raw/ptz_tracks_3d_interpolated.csv
   gt_file: data/GT/GT.xlsx
   video_file: data/raw/ZeF-03.mp4
   output_dir: outputs
@@ -35,6 +36,9 @@ gt:
   end_second_col: end_second
   label_col: label
   confidence_col: confidence
+  fish_id_map:
+    "0": "2"
+    "1": "1"
 
 preprocess:
   frame_rate: 30.0
@@ -80,8 +84,8 @@ segmentation:
     - inv_S_pose
   normalize_features: true
   normalization: zscore
-  min_segment_length_frames: 15
-  penalty: 2.0
+  min_segment_length_frames: 10
+  penalty: 0.9
   save_change_scores: true
 
 detection:
@@ -135,8 +139,9 @@ visualization:
   dpi: 150
 
 adaptive:
-  enabled: false
-  method: distribution
+  mode: absolute  # relative or absolute
+  relative_threshold_file: configs/adaptive/current_dataset_thresholds.yaml
+  method: relative_threshold_v1
 
 output:
   save_events: true
